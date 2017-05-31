@@ -9,22 +9,24 @@ const gulp = require('gulp'),
     maps = require('gulp-sourcemaps'),
     uglify = require('gulp-uglify'),
     imagemin = require('gulp-imagemin'),
-    connect = require('gulp-connect');
+    connect = require('gulp-connect'),
+    eslint = require('gulp-eslint');
 
+// Object containing src and dist directory to use throughout tasks
 const options = {
     src: "src",
     dist: "dist"
 }
 
 // Scripts task
-gulp.task('scripts', () => {
+gulp.task('scripts', ['lint'], () => {
     return gulp.src([options.src + '/js/global.js', options.src + '/js/circle/*'])
         .pipe(concat('app.js'))
         .pipe(maps.init())
         .pipe(uglify())
         .pipe(rename('all.min.js'))
         .pipe(maps.write('./'))
-        .pipe(gulp.dest('dist/scripts'));
+        .pipe(gulp.dest(options.dist + '/scripts'));
 });
 
 // Styles task
@@ -34,7 +36,7 @@ gulp.task('styles', () => {
         .pipe(maps.init())
         .pipe(sass())
         .pipe(maps.write('./'))
-        .pipe(gulp.dest('dist/styles'))
+        .pipe(gulp.dest(options.dist + '/styles'))
         .pipe(connect.reload());
 });
 
@@ -42,19 +44,27 @@ gulp.task('styles', () => {
 gulp.task('images', () => {
     return gulp.src(options.src + '/images/*')
         .pipe(imagemin())
-        .pipe(gulp.dest('dist/content'));
+        .pipe(gulp.dest(options.dist + '/content'));
 });
 
 // Delete all of the files and folders in the dist folder
 gulp.task('clean', () => {
-    del('dist/*');
+    del(options.dist + '/*');
 });
 
+// Serve task
 gulp.task('serve', () => {
     return connect.server({
-        root: 'dist',
+        root: options.dist,
         livereload: true
     });
+});
+
+// Lint task
+gulp.task('lint', () => {
+    return gulp.src([options.src + '/**/*.js', '!node_modules/**'])
+    .pipe(eslint())
+    .pipe(eslint.failAfterError());
 });
 
 // Build command with task dependencies, clean being first
